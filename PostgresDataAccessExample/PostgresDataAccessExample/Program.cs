@@ -1,7 +1,10 @@
 using System.Data;
+using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using PostgresDataAccessExample.Data;
+using PostgresDataAccessExample.Services;
+using PostgresDataAccessExample.Setup;
 
 try
 {
@@ -40,12 +43,15 @@ try
     
     // Создание тестовой таблицы
     Console.WriteLine("Creating test table...");
-    //dbContext.CreateTestTable();
+    dbContext.CreateTestTable();
     Console.WriteLine("✅ Test table created!");
+    
+    // Проверка и создание триггера для уведомлений
+    DatabaseSetup.EnsureNotificationTriggerExists(dbContext);
 
     // Добавление тестовых данных
     Console.WriteLine("Inserting test data...");
-    //dbContext.InsertTestData();
+    dbContext.InsertTestData();
     Console.WriteLine("✅ Test data inserted!");
 
     Console.WriteLine();
@@ -95,6 +101,20 @@ try
     Console.WriteLine("\nUpdated data:");
     var updatedDataSet = dbContext.ExecuteQuery(allUsersSql);
     DisplayDataSet(updatedDataSet);
+
+    // Вывод данных в реальном времени
+    Console.WriteLine("\nReal-time data output from another program");
+    Console.WriteLine(new string('-', 50));
+
+    var notificationService = new NotificationService(dbContext);
+    var cts = new CancellationTokenSource();
+    var listenTask = notificationService.ListenForNewUsers(cts.Token);
+
+    Console.WriteLine("Listening for new user notifications. Press any key to stop.");
+    Console.ReadKey();
+
+    cts.Cancel();
+    listenTask.Wait();
 
 }
 catch (Exception ex)
