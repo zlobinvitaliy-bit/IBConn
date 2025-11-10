@@ -1,0 +1,81 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|e:\\\u0443\u0447\u0435\u0431\u0430\\postgresdataaccessexample\\postgresdataaccessexample\\data\\dbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|solutionrelative:postgresdataaccessexample\\data\\dbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|e:\\\u0443\u0447\u0435\u0431\u0430\\postgresdataaccessexample\\postgresdataaccessexample\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|solutionrelative:postgresdataaccessexample\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|e:\\\u0443\u0447\u0435\u0431\u0430\\postgresdataaccessexample\\postgresdataaccessexample\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{32C94E72-CAB8-634D-FC39-3D2B2F8ECF68}|PostgresDataAccessExample\\PostgresDataAccessExample.csproj|solutionrelative:postgresdataaccessexample\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\appsettings.json",
+              "RelativeDocumentMoniker": "PostgresDataAccessExample\\appsettings.json",
+              "ToolTip": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\appsettings.json",
+              "RelativeToolTip": "PostgresDataAccessExample\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAABvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-11-08T16:48:49.353Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\Program.cs",
+              "RelativeDocumentMoniker": "PostgresDataAccessExample\\Program.cs",
+              "ToolTip": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\Program.cs",
+              "RelativeToolTip": "PostgresDataAccessExample\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEwAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-08T16:37:11.829Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "DbContext.cs",
+              "DocumentMoniker": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\Data\\DbContext.cs",
+              "RelativeDocumentMoniker": "PostgresDataAccessExample\\Data\\DbContext.cs",
+              "ToolTip": "E:\\\u0443\u0447\u0435\u0431\u0430\\PostgresDataAccessExample\\PostgresDataAccessExample\\Data\\DbContext.cs",
+              "RelativeToolTip": "PostgresDataAccessExample\\Data\\DbContext.cs",
+              "ViewState": "AgIAAG8AAAAAAAAAAAAAAEkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-08T16:36:10.575Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
