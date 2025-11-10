@@ -3,7 +3,7 @@ using System.Data;
 using System.Threading;
 using Microsoft.Extensions.Configuration; // Для работы с конфигурацией (appsettings.json)
 using Npgsql; // Клиент для работы с PostgreSQL
-using PostgresDataAccessExample.Data; // Наш DbContext
+using PostgresDataAccessExample.Data; // Наш DbContext и DbConnectionFactory
 using PostgresDataAccessExample.Services; // Сервис для прослушивания уведомлений
 using PostgresDataAccessExample.Setup;    // Класс для настройки базы данных
 
@@ -16,10 +16,12 @@ try
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Добавляем JSON-файл с настройками
         .Build(); // Собираем конфигурацию
 
-    // --- 2. ИНИЦИАЛИЗАЦИЯ КОНТЕКСТА БАЗЫ ДАННЫХ ---
-    // Создаем экземпляр DbContext, передавая ему конфигурацию.
-    // 'using' гарантирует, что ресурсы (например, соединение) будут освобождены после использования.
-    using var dbContext = new DbContext(configuration);
+    // --- 2. ИНИЦИАЛИЗАЦИЯ ФАБРИКИ И КОНТЕКСТА ---
+    // Создаем фабрику, которая будет централизованно управлять строкой подключения и созданием соединений.
+    var dbConnectionFactory = new DbConnectionFactory(configuration);
+    // Создаем экземпляр DbContext, передавая ему фабрику.
+    // 'using' гарантирует, что ресурсы будут освобождены после использования.
+    using var dbContext = new DbContext(dbConnectionFactory);
 
     Console.WriteLine("=== PostgreSQL Data Access Example ===");
     Console.WriteLine();
@@ -119,8 +121,8 @@ try
     Console.WriteLine("\nReal-time data output from another program");
     Console.WriteLine(new string('-', 50));
 
-    // Создаем сервис уведомлений
-    var notificationService = new NotificationService(dbContext);
+    // Создаем сервис уведомлений, передавая ему фабрику подключений.
+    var notificationService = new NotificationService(dbConnectionFactory);
     // CancellationTokenSource для graceful shutdown (плавной остановки) прослушивания
     var cts = new CancellationTokenSource();
     // Запускаем прослушивание в фоновом потоке

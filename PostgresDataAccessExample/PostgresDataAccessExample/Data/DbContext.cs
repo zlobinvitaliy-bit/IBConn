@@ -1,50 +1,37 @@
 
 using System.Data;
-using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace PostgresDataAccessExample.Data
 {
     /// <summary>
     /// Предоставляет контекст для взаимодействия с базой данных PostgreSQL.
-    /// Управляет подключениями и выполнением SQL-команд.
+    /// Управляет выполнением SQL-команд, используя соединения от DbConnectionFactory.
     /// </summary>
     public class DbContext : IDisposable
     {
-        // Строка подключения к базе данных.
-        private readonly string _connectionString;
+        // Фабрика для создания подключений к БД.
+        private readonly DbConnectionFactory _dbConnectionFactory;
         // Флаг, указывающий, был ли объект уже освобожден.
         private bool _disposed = false;
 
         /// <summary>
         /// Инициализирует новый экземпляр класса DbContext.
         /// </summary>
-        /// <param name="configuration">Конфигурация приложения, из которой извлекается строка подключения.</param>
-        public DbContext(IConfiguration configuration)
+        /// <param name="dbConnectionFactory">Фабрика для создания подключений к базе данных.</param>
+        public DbContext(DbConnectionFactory dbConnectionFactory)
         {
-            // Получение строки подключения из конфигурации.
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new ArgumentNullException("Connection string not found in configuration");
+            _dbConnectionFactory = dbConnectionFactory ?? throw new ArgumentNullException(nameof(dbConnectionFactory));
         }
 
         /// <summary>
-        /// Возвращает текущую строку подключения.
-        /// </summary>
-        /// <returns>Строка подключения.</returns>
-        public string GetConnectionString()
-        {
-            return _connectionString;
-        }
-
-        /// <summary>
-        /// Создает и открывает новое подключение к базе данных.
+        /// Создает и открывает новое подключение к базе данных с помощью фабрики.
         /// </summary>
         /// <returns>Открытое NpgsqlConnection.</returns>
         private NpgsqlConnection CreateConnection()
         {
-            var connection = new NpgsqlConnection(_connectionString);
-            connection.Open();
-            return connection;
+            // Делегируем создание подключения фабрике.
+            return _dbConnectionFactory.CreateConnection();
         }
 
         /// <summary>

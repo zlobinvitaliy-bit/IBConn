@@ -12,15 +12,15 @@ namespace PostgresDataAccessExample.Services
     /// </summary>
     public class NotificationService
     {
-        private readonly DbContext _dbContext;
+        private readonly DbConnectionFactory _dbConnectionFactory;
 
         /// <summary>
         /// Инициализирует новый экземпляр сервиса уведомлений.
         /// </summary>
-        /// <param name="dbContext">Контекст для работы с базой данных.</param>
-        public NotificationService(DbContext dbContext)
+        /// <param name="dbConnectionFactory">Фабрика для создания подключений к базе данных.</param>
+        public NotificationService(DbConnectionFactory dbConnectionFactory)
         {
-            _dbContext = dbContext;
+            _dbConnectionFactory = dbConnectionFactory;
         }
 
         /// <summary>
@@ -33,10 +33,9 @@ namespace PostgresDataAccessExample.Services
             // Запускаем длительную операцию в фоновом потоке, чтобы не блокировать основной.
             return Task.Run(() =>
             {
-                // Создаем новое соединение специально для прослушивания.
+                // Создаем новое соединение специально для прослушивания, используя фабрику.
                 // Важно использовать отдельное соединение, чтобы оно оставалось открытым.
-                using var connection = new NpgsqlConnection(_dbContext.GetConnectionString());
-                connection.Open();
+                using var connection = _dbConnectionFactory.CreateConnection();
 
                 // Подписываемся на событие Notification.
                 // Это событие будет срабатывать, когда от PostgreSQL придет уведомление по каналу, на который мы подпишемся.
