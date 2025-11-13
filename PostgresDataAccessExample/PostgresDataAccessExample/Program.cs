@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using PostgresDataAccessExample.Data;
 using PostgresDataAccessExample.Models;
+using PostgresDataAccessExample.Repositories;
 using PostgresDataAccessExample.Services;
 using PostgresDataAccessExample.ViewModels;
 using System;
@@ -23,8 +24,9 @@ namespace PostgresDataAccessExample
                     .Build();
 
                 var dbConnectionFactory = new DbConnectionFactory(configuration);
-                var userViewModel = new UserViewModel(dbConnectionFactory);
-                var taskViewModel = new TaskViewModel(dbConnectionFactory);
+                using var dbContext = new DbContext(dbConnectionFactory);
+                var userRepository = new UserRepository(dbContext);
+                var userViewModel = new UserViewModel(userRepository);
 
                 Console.WriteLine("=== PostgreSQL Data Access Example ===");
 
@@ -55,7 +57,7 @@ namespace PostgresDataAccessExample
                 Console.WriteLine("\nUpdated data:");
                 var updatedUsers = await userViewModel.GetAllUsersAsync();
                 DisplayUsers(updatedUsers);
-                
+
                 var notificationService = new NotificationService(dbConnectionFactory);
                 var cts = new CancellationTokenSource();
                 var listenTask = notificationService.ListenForNewUsers(cts.Token);
