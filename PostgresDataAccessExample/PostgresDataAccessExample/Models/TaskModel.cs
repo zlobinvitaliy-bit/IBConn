@@ -1,24 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
-namespace ARM.Models
+namespace PostgresDataAccessExample.Models
 {
     public class TaskModel
     {
-        public string Time { get; set; }
-        public string TDoc { get; set; }
-        public string Product { get; set; }
-        public string FlowDirection { get; set; }
-        public string Car { get; set; }
-        public string Tank { get; set; }
-        public string CarDriver { get; set; }
-        public string SetTotal_V { get; set; }
-        public string Fact_V { get; set; }
-        public string SetTotal_M { get; set; }
-        public string Fact_M { get; set; }
-        public string SetDensity { get; set; }
+        public int Id { get; set; }
+        public DateTime Time { get; set; } // RecTime
+        public string TDoc { get; set; } // Doc
+        public string ProductName { get; set; } // Product (from JOIN)
+        public string Car { get; set; } // Machine (from JOIN)
+        public int Direction { get; set; }
     }
 }

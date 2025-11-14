@@ -1,47 +1,60 @@
 using PostgresDataAccessExample.Models;
 using PostgresDataAccessExample.Repositories;
-using System.Collections.Generic;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading; // Необходимо для Dispatcher
 
 namespace PostgresDataAccessExample.ViewModels
 {
-    public class UserViewModel : IViewModel
+    public class UserViewModel
     {
         private readonly UserRepository _userRepository;
+        private readonly Dispatcher _dispatcher;
 
-        public UserViewModel(UserRepository userRepository)
+        public ObservableCollection<UserModel> Users { get; } = new ObservableCollection<UserModel>();
+
+        public UserViewModel(UserRepository userRepository, Dispatcher dispatcher)
         {
             _userRepository = userRepository;
+            _dispatcher = dispatcher;
         }
 
-        public async Task CreateUsersTableAsync()
+        public async Task LoadInitialUsersAsync()
         {
-            await _userRepository.CreateUsersTableAsync();
+            Console.WriteLine("Fetching initial users...");
+            var initialUsers = await _userRepository.GetAllAsync();
+            _dispatcher.Invoke(() =>
+            {
+                Users.Clear();
+                foreach (var user in initialUsers)
+                {
+                    Users.Add(user);
+                }
+            });
+            Console.WriteLine($"Loaded {initialUsers.Count} initial users.");
         }
 
-        public async Task InsertTestDataAsync()
+        public async void HandleNewUserNotification(int userId)
         {
-            await _userRepository.InsertTestDataAsync();
-        }
-
-        public async Task<List<UserModel>> GetAllUsersAsync()
-        {
-            return await _userRepository.GetAllUsersAsync();
-        }
-
-        public async Task<List<UserModel>> GetUserByNameAsync(string name)
-        {
-            return await _userRepository.GetUserByNameAsync(name);
-        }
-
-        public async Task<long> GetUserCountAsync()
-        {
-            return await _userRepository.GetUserCountAsync();
-        }
-
-        public async Task<int> UpdateUserEmailAsync(string userName, string newEmail)
-        {
-            return await _userRepository.UpdateUserEmailAsync(userName, newEmail);
+            Console.WriteLine($"Received new user ID: {userId}. Fetching full data...");
+            var newUser = await _userRepository.GetUserByIdAsync(userId);
+            if (newUser != null)
+            {
+                Console.WriteLine($"Data fetched for user {userId}. Adding to collection.");
+                _dispatcher.Invoke(() =>
+                {
+                    if (!Users.Any(u => u.Id == newUser.Id))
+                    {
+                        Users.Insert(0, newUser);
+                    }
+                });
+            }
+            else
+            {
+                Console.WriteLine($"Warning: Could not find data for new user ID {userId}.");
+            }
         }
     }
 }

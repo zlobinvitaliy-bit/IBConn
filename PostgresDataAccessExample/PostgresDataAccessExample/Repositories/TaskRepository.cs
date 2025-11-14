@@ -9,8 +9,32 @@ namespace PostgresDataAccessExample.Repositories
     public class TaskRepository
     {
         private readonly DbContext _dbContext;
-        private const string GetTasksSql = @"SELECT ""RecTime"", ""Doc"", ""Product"", ""Direction"", ""Machine"", ""Tank"", ""Driver"", ""DocV"", ""DocW"", ""DocD"", ""State"", ""Receipt""
-                        FROM ""JobsN"" ORDER BY ""RecTime""";
+
+        // Запрос теперь объединяет JobsN с Products и Machines, чтобы получить полные имена
+        private const string GetTasksSql = @"SELECT 
+                j.Id, 
+                j.RecTime, 
+                j.Doc, 
+                p.Name AS ProductName, 
+                m.Name AS MachineName,
+                j.Direction
+            FROM ""JobsN"" j
+            LEFT JOIN ""Products"" p ON j.Product = p.Id
+            LEFT JOIN ""Machines"" m ON j.Machine = m.Id
+            ORDER BY j.RecTime DESC";
+
+        // Этот запрос получает одну задачу по ID со всеми объединенными данными
+        private const string GetTaskByIdSql = @"SELECT 
+                j.Id, 
+                j.RecTime, 
+                j.Doc, 
+                p.Name AS ProductName, 
+                m.Name AS MachineName,
+                j.Direction
+            FROM ""JobsN"" j
+            LEFT JOIN ""Products"" p ON j.Product = p.Id
+            LEFT JOIN ""Machines"" m ON j.Machine = m.Id
+            WHERE j.Id = @Id";
 
         public TaskRepository(DbContext dbContext)
         {
@@ -19,27 +43,39 @@ namespace PostgresDataAccessExample.Repositories
 
         public async Task<List<TaskModel>> GetTasksAsync()
         {
-            var taskList = new List<TaskModel>();
+            var tasks = new List<TaskModel>();
             await using var reader = await _dbContext.ExecuteReaderAsync(GetTasksSql);
             while (await reader.ReadAsync())
             {
-                taskList.Add(new TaskModel
+                tasks.Add(new TaskModel
                 {
-                    Time = reader.GetDateTime(reader.GetOrdinal("RecTime")).ToString("yyyy-MM-dd HH:mm:ss"),
-                    TDoc = reader.GetString(reader.GetOrdinal("Doc")),
-                    Product = reader.GetInt16(reader.GetOrdinal("Product")).ToString(),
-                    FlowDirection = reader.GetInt16(reader.GetOrdinal("Direction")).ToString(),
-                    Car = reader.GetString(reader.GetOrdinal("Machine")),
-                    Tank = reader.GetInt16(reader.GetOrdinal("Tank")).ToString(),
-                    CarDriver = reader.GetString(reader.GetOrdinal("Driver")),
-                    SetTotal_V = reader.GetInt16(reader.GetOrdinal("DocV")).ToString(),
-                    Fact_V = reader.GetInt16(reader.GetOrdinal("DocW")).ToString(),
-                    SetTotal_M = reader.GetInt16(reader.GetOrdinal("DocD")).ToString(),
-                    Fact_M = reader.GetInt16(reader.GetOrdinal("State")).ToString(),
-                    SetDensity = reader.GetInt16(reader.GetOrdinal("Receipt")).ToString()
+                    Id = reader.GetInt32(0),
+                    Time = reader.GetDateTime(1),
+                    TDoc = reader.GetString(2),
+                    ProductName = reader.IsDBNull(3) ? "N/A" : reader.GetString(3),
+                    Car = reader.IsDBNull(4) ? "N/A" : reader.GetString(4),
+                    Direction = reader.GetInt32(5)
                 });
             }
-            return taskList;
+            return tasks;
+        }
+
+        public async Task<TaskModel?> GetTaskByIdAsync(int id)
+        {
+            await using var reader = await _dbContext.ExecuteReaderAsync(GetTaskByIdSql, new NpgsqlParameter("@Id", id));
+            if (await reader.ReadAsync())
+            {
+                return new TaskModel
+                {
+                    Id = reader.GetInt32(0),
+                    Time = reader.GetDateTime(1),
+                    TDoc = reader.GetString(2),
+                    ProductName = reader.IsDBNull(3) ? "N/A" : reader.GetString(3),
+                    Car = reader.IsDBNull(4) ? "N/A" : reader.GetString(4),
+                    Direction = reader.GetInt32(5)
+                };
+            }
+            return null;
         }
     }
 }
