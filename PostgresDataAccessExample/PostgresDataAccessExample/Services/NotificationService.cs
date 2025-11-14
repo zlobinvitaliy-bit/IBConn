@@ -1,80 +1,116 @@
-
 using Npgsql;
 using PostgresDataAccessExample.Data;
+using PostgresDataAccessExample.Models;
+using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace PostgresDataAccessExample.Services
 {
-    /// <summary>
-    /// Сервис для прослушивания уведомлений от базы данных PostgreSQL.
-    /// </summary>
     public class NotificationService
     {
         private readonly DbConnectionFactory _dbConnectionFactory;
 
-        /// <summary>
-        /// Инициализирует новый экземпляр сервиса уведомлений.
-        /// </summary>
-        /// <param name="dbConnectionFactory">Фабрика для создания подключений к базе данных.</param>
         public NotificationService(DbConnectionFactory dbConnectionFactory)
         {
             _dbConnectionFactory = dbConnectionFactory;
         }
 
-        /// <summary>
-        /// Запускает в фоновом режиме прослушивание уведомлений о добавлении новых пользователей.
-        /// </summary>
-        /// <param name="cancellationToken">Токен для отмены операции.</param>
-        /// <returns>Задача, представляющая асинхронную операцию прослушивания.</returns>
-        public Task ListenForNewUsers(CancellationToken cancellationToken)
+        public Task ListenForNewJobs(CancellationToken cancellationToken)
         {
-            // Запускаем длительную операцию в фоновом потоке, чтобы не блокировать основной.
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
-                // Создаем новое соединение специально для прослушивания, используя фабрику.
-                // Важно использовать отдельное соединение, чтобы оно оставалось открытым.
-                using var connection = _dbConnectionFactory.CreateConnection();
+                await using var connection = _dbConnectionFactory.CreateConnection();
+                await connection.OpenAsync(cancellationToken);
 
-                // Подписываемся на событие Notification.
-                // Это событие будет срабатывать, когда от PostgreSQL придет уведомление по каналу, на который мы подпишемся.
                 connection.Notification += (o, e) =>
                 {
-                    Console.WriteLine("Получено уведомление от БД:");
+                    Console.WriteLine("\n--- New Job Notification Received ---");
                     try
                     {
-                        // Полезная нагрузка (e.Payload) приходит в виде строки, в нашем случае это JSON.
-                        // Парсим JSON для извлечения данных.
-                        using var jsonDoc = JsonDocument.Parse(e.Payload);
-                        var root = jsonDoc.RootElement;
-                        Console.WriteLine($"  ID: {root.GetProperty("id").GetInt32()}");
-                        Console.WriteLine($"  Имя: {root.GetProperty("name").GetString()}");
-                        Console.WriteLine($"  Email: {root.GetProperty("email").GetString()}");
-                        Console.WriteLine($"  Дата создания: {root.GetProperty("created_at").GetDateTime()}");
+                        var task = JsonSerializer.Deserialize<TaskModelNotification>(e.Payload);
+                        if (task != null)
+                        {
+                            Console.WriteLine($"  Time: {task.RecTime:yyyy-MM-dd HH:mm:ss}");
+                            Console.WriteLine($"  Document: {task.Doc}");
+                            Console.WriteLine($"  Product: {task.Product}");
+                            Console.WriteLine($"  Direction: {task.Direction}");
+                            Console.WriteLine($"  Machine: {task.Machine}");
+                            Console.WriteLine("-----------------------------------\n");
+                        }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Не удалось разобрать полезную нагрузку уведомления: " + ex.Message);
+                        Console.WriteLine($"Error processing notification payload: {ex.Message}");
                     }
                 };
 
-                // Отправляем команду LISTEN, чтобы подписаться на канал 'new_user_notification'.
-                // Теперь это соединение будет получать уведомления, отправленные в этот канал.
-                using (var cmd = new NpgsqlCommand("LISTEN new_user_notification", connection))
+                await using (var cmd = new NpgsqlCommand("LISTEN new_job_notification", connection))
                 {
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync(cancellationToken);
                 }
 
-                // Входим в бесконечный цикл ожидания, пока не будет запрошена отмена.
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    // Метод Wait() блокирует поток и ждет поступления любого уведомления.
-                    // Как только уведомление приходит, обработчик события 'Notification' выше срабатывает,
-                    // и после его выполнения цикл продолжается, снова ожидая следующего уведомления.
-                    connection.Wait();
+                    await connection.WaitAsync(cancellationToken);
                 }
             }, cancellationToken);
         }
+
+        // The original ListenForNewUsers method can be kept if needed, or removed if not.
+        public Task ListenForNewUsers(CancellationToken cancellationToken)
+        {
+            return Task.Run(async () =>
+            {
+                await using var connection = _dbConnectionFactory.CreateConnection();
+                await connection.OpenAsync(cancellationToken);
+
+                connection.Notification += (o, e) =>
+                {
+                    Console.WriteLine("New User Notification Received:");
+                    try
+                    {
+                        using var jsonDoc = JsonDocument.Parse(e.Payload);
+                        var root = jsonDoc.RootElement;
+                        Console.WriteLine($"  ID: {root.GetProperty("id").GetInt32()}");
+                        Console.WriteLine($"  Name: {root.GetProperty("name").GetString()}");
+                        Console.WriteLine($"  Email: {root.GetProperty("email").GetString()}");
+                        Console.WriteLine($"  Created At: {root.GetProperty("created_at").GetDateTime()}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error processing notification payload: {ex.Message}");
+                    }
+                };
+
+                await using (var cmd = new NpgsqlCommand("LISTEN new_user_notification", connection))
+                {
+                    await cmd.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await connection.WaitAsync(cancellationToken);
+                }
+            }, cancellationToken);
+        }
+    }
+
+    // Helper class for deserialization
+    public class TaskModelNotification
+    {
+        public DateTime RecTime { get; set; }
+        public string Doc { get; set; }
+        public int Product { get; set; }
+        public int Direction { get; set; }
+        public string Machine { get; set; }
+        public int Tank { get; set; }
+        public string Driver { get; set; }
+        public int DocV { get; set; }
+        public int DocW { get; set; }
+        public int DocD { get; set; }
+        public int State { get; set; }
+        public int Receipt { get; set; }
     }
 }
