@@ -10,35 +10,41 @@ namespace PostgresDataAccessExample.Repositories
     {
         private readonly DbContext _dbContext;
 
-        // Запрос теперь объединяет JobsN с Products и Machines, чтобы получить полные имена
         private const string GetTasksSql = @"SELECT 
-                j.Id, 
-                j.RecTime, 
-                j.Doc, 
-                p.Name AS ProductName, 
-                m.Name AS MachineName,
-                j.Direction
-            FROM ""JobsN"" j
-            LEFT JOIN ""Products"" p ON j.Product = p.Id
-            LEFT JOIN ""Machines"" m ON j.Machine = m.Id
-            ORDER BY j.RecTime DESC";
+                ""Job64"", ""RecTime"", ""Doc"", ""Product"", ""Direction"", ""Machine"", 
+                ""Tank"", ""Driver"", ""DocV"", ""DocW"", ""DocD""
+            FROM ""JobsN"" 
+            ORDER BY ""RecTime"" DESC";
 
-        // Этот запрос получает одну задачу по ID со всеми объединенными данными
         private const string GetTaskByIdSql = @"SELECT 
-                j.Id, 
-                j.RecTime, 
-                j.Doc, 
-                p.Name AS ProductName, 
-                m.Name AS MachineName,
-                j.Direction
-            FROM ""JobsN"" j
-            LEFT JOIN ""Products"" p ON j.Product = p.Id
-            LEFT JOIN ""Machines"" m ON j.Machine = m.Id
-            WHERE j.Id = @Id";
+                ""Job64"", ""RecTime"", ""Doc"", ""Product"", ""Direction"", ""Machine"", 
+                ""Tank"", ""Driver"", ""DocV"", ""DocW"", ""DocD""
+            FROM ""JobsN"" 
+            WHERE ""Job64"" = @Job64";
 
         public TaskRepository(DbContext dbContext)
         {
             _dbContext = dbContext;
+        }
+
+        private static TaskModel ReadTask(NpgsqlDataReader reader)
+        {
+            return new TaskModel
+            {
+                Job64 = reader.GetInt32(0),
+                Time = reader.GetDateTime(1).ToString("yyyy-MM-dd HH:mm:ss"),
+                TDoc = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                Product = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                FlowDirection = reader.IsDBNull(4) ? string.Empty : reader.GetInt32(4).ToString(),
+                Car = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                Tank = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                CarDriver = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                SetTotal_V = reader.IsDBNull(8) ? string.Empty : reader.GetDecimal(8).ToString(),
+                Fact_V = string.Empty, // Not in the query
+                SetTotal_M = reader.IsDBNull(9) ? string.Empty : reader.GetDecimal(9).ToString(),
+                Fact_M = string.Empty, // Not in the query
+                SetDensity = reader.IsDBNull(10) ? string.Empty : reader.GetDecimal(10).ToString()
+            };
         }
 
         public async Task<List<TaskModel>> GetTasksAsync()
@@ -47,33 +53,17 @@ namespace PostgresDataAccessExample.Repositories
             await using var reader = await _dbContext.ExecuteReaderAsync(GetTasksSql);
             while (await reader.ReadAsync())
             {
-                tasks.Add(new TaskModel
-                {
-                    Id = reader.GetInt32(0),
-                    Time = reader.GetDateTime(1),
-                    TDoc = reader.GetString(2),
-                    ProductName = reader.IsDBNull(3) ? "N/A" : reader.GetString(3),
-                    Car = reader.IsDBNull(4) ? "N/A" : reader.GetString(4),
-                    Direction = reader.GetInt32(5)
-                });
+                tasks.Add(ReadTask(reader));
             }
             return tasks;
         }
 
-        public async Task<TaskModel?> GetTaskByIdAsync(int id)
+        public async Task<TaskModel?> GetTaskByIdAsync(int job64)
         {
-            await using var reader = await _dbContext.ExecuteReaderAsync(GetTaskByIdSql, new NpgsqlParameter("@Id", id));
+            await using var reader = await _dbContext.ExecuteReaderAsync(GetTaskByIdSql, new NpgsqlParameter("@Job64", job64));
             if (await reader.ReadAsync())
             {
-                return new TaskModel
-                {
-                    Id = reader.GetInt32(0),
-                    Time = reader.GetDateTime(1),
-                    TDoc = reader.GetString(2),
-                    ProductName = reader.IsDBNull(3) ? "N/A" : reader.GetString(3),
-                    Car = reader.IsDBNull(4) ? "N/A" : reader.GetString(4),
-                    Direction = reader.GetInt32(5)
-                };
+                return ReadTask(reader);
             }
             return null;
         }

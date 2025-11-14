@@ -1,6 +1,5 @@
 using Npgsql;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -9,6 +8,7 @@ namespace PostgresDataAccessExample.Data
     public class DbContext : IDisposable
     {
         private readonly DbConnectionFactory _connectionFactory;
+        private NpgsqlConnection? _connection;
 
         public DbContext(DbConnectionFactory connectionFactory)
         {
@@ -16,6 +16,20 @@ namespace PostgresDataAccessExample.Data
         }
 
         public NpgsqlConnection CreateConnection() => _connectionFactory.CreateConnection();
+
+        public NpgsqlConnection Connection
+        {
+            get
+            {
+                if (_connection == null || _connection.State == ConnectionState.Closed || _connection.State == ConnectionState.Broken)
+                {
+                    _connection?.Dispose();
+                    _connection = _connectionFactory.CreateConnection();
+                    _connection.Open();
+                }
+                return _connection;
+            }
+        }
 
         public bool TestConnection()
         {
@@ -49,7 +63,14 @@ namespace PostgresDataAccessExample.Data
             return await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task<object> ExecuteScalarAsync(string sql, params NpgsqlParameter[] parameters)
+        public object? ExecuteScalar(string sql, params NpgsqlParameter[] parameters)
+        {
+            using var cmd = new NpgsqlCommand(sql, Connection);
+            cmd.Parameters.AddRange(parameters);
+            return cmd.ExecuteScalar();
+        }
+
+        public async Task<object?> ExecuteScalarAsync(string sql, params NpgsqlParameter[] parameters)
         {
             await using var connection = CreateConnection();
             await connection.OpenAsync();
@@ -60,7 +81,7 @@ namespace PostgresDataAccessExample.Data
 
         public void Dispose()
         {
-            // No-op for now
+            _connection?.Dispose();
         }
     }
 }

@@ -4,63 +4,50 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Threading; // Необходимо для Dispatcher
 
 namespace PostgresDataAccessExample.ViewModels
 {
     public class TaskViewModel
     {
         private readonly TaskRepository _taskRepository;
-        private readonly Dispatcher _dispatcher; // Диспетчер для обновления UI-потока
 
-        // Коллекция, которая будет связана с DataGrid. Она будет уведомлять UI об изменениях.
         public ObservableCollection<TaskModel> Tasks { get; } = new ObservableCollection<TaskModel>();
 
-        public TaskViewModel(TaskRepository taskRepository, Dispatcher dispatcher)
+        public TaskViewModel(TaskRepository taskRepository)
         {
             _taskRepository = taskRepository;
-            _dispatcher = dispatcher;
         }
 
-        // Загружает первоначальный список задач
         public async Task LoadInitialTasksAsync()
         {
             Console.WriteLine("Fetching initial tasks...");
             var initialTasks = await _taskRepository.GetTasksAsync();
-            _dispatcher.Invoke(() =>
+            
+            Tasks.Clear();
+            foreach (var task in initialTasks)
             {
-                Tasks.Clear();
-                foreach (var task in initialTasks)
-                {
-                    Tasks.Add(task);
-                }
-            });
+                Tasks.Add(task);
+            }
+            
             Console.WriteLine($"Loaded {initialTasks.Count} initial tasks.");
         }
 
-        // Метод, который будет вызываться из NotificationService
-        public async void HandleNewJobNotification(int jobId)
+        public async void HandleNewJobNotification(int job64)
         {
-            Console.WriteLine($"Received new job ID: {jobId}. Fetching full data...");
-            var newTask = await _taskRepository.GetTaskByIdAsync(jobId);
+            Console.WriteLine($"Received new job ID: {job64}. Fetching full data...");
+            var newTask = await _taskRepository.GetTaskByIdAsync(job64);
             if (newTask != null)
             {
-                Console.WriteLine($"Data fetched for task {jobId}. Adding to collection.");
+                Console.WriteLine($"Data fetched for task {job64}. Adding to collection.");
 
-                // Используем Dispatcher для безопасного обновления ObservableCollection из любого потока
-                _dispatcher.Invoke(() =>
+                if (!Tasks.Any(t => t.Job64 == newTask.Job64))
                 {
-                    // Проверяем, нет ли уже такой задачи (на всякий случай)
-                    if (!Tasks.Any(t => t.Id == newTask.Id))
-                    {
-                        // Добавляем в начало списка для наглядности
-                        Tasks.Insert(0, newTask);
-                    }
-                });
+                    Tasks.Insert(0, newTask);
+                }
             }
             else
             {
-                Console.WriteLine($"Warning: Could not find data for new job ID {jobId}.");
+                Console.WriteLine($"Warning: Could not find data for new job ID {job64}.");
             }
         }
     }
